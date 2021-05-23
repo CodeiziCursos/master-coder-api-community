@@ -8,7 +8,15 @@ import {
 } from './../commands/new-question.command';
 import { IEventBus } from './../../commons/events/event-bus.interface';
 import { NewQuestionCreateEvent } from './../events/new-question-created.event';
+import { IQuestion } from '../repositories/question.repository';
 
+const repository: jest.Mocked<IQuestion> = {
+  save: jest.fn(),
+};
+
+const eventBus: jest.Mocked<IEventBus<NewQuestionCreateEvent>> = {
+  publish: jest.fn(),
+};
 describe('NewQuestionHandler', () => {
   const makeQuestion = (): Question => {
     return new Question(undefined, '', '', 5, Status.Pending, [
@@ -23,14 +31,9 @@ describe('NewQuestionHandler', () => {
   };
 
   const makeSut = () => {
-    const repository = new QuestionRepository();
-    repository.save = jest.fn(() => Promise.resolve(true));
-    const eventBus = new EventBusMock();
-    const spy = jest.spyOn(EventBusMock.prototype, 'publish');
     return {
       repository,
       eventBus,
-      spy,
     };
   };
 
@@ -39,9 +42,9 @@ describe('NewQuestionHandler', () => {
   });
 
   it('should call repository with correct question', async () => {
-    const { repository } = makeSut();
+    const { repository, eventBus } = makeSut();
 
-    const hander = new NewQuestionHandler(repository, new EventBusMock());
+    const hander = new NewQuestionHandler(repository, eventBus);
     hander.execute(makeCommand());
 
     expect(repository.save).toBeCalledWith(makeQuestion());
@@ -49,24 +52,13 @@ describe('NewQuestionHandler', () => {
 
   it('should call event event created', async () => {
     const { id, idUser } = makeQuestion();
-    const { repository, eventBus, spy } = makeSut();
+    const { repository, eventBus } = makeSut();
 
     const hander = new NewQuestionHandler(repository, eventBus);
     await hander.execute(makeCommand());
 
-    expect(spy.mock.calls.length).toBe(1);
-    expect(spy).toBeCalledWith(new NewQuestionCreateEvent(idUser, id));
+    expect(eventBus.publish).toBeCalledWith(
+      new NewQuestionCreateEvent(idUser, id),
+    );
   });
 });
-
-export class QuestionRepository {
-  async save(question: Question): Promise<boolean> {
-    return Promise.resolve(true);
-  }
-}
-
-export class EventBusMock implements IEventBus<NewQuestionCreateEvent> {
-  publish(event: NewQuestionCreateEvent) {
-    return event;
-  }
-}
