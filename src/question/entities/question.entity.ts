@@ -14,6 +14,7 @@ export class Question extends AggregateRoot {
     score: number,
     private _status: Status = Status.Pending,
     private _alternatives: Alternative[] = [],
+    public readonly code: string = '',
   ) {
     super();
     this._score = new Score(score);
