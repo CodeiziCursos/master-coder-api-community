@@ -8,9 +8,9 @@ import {
 } from './../commands/new-question.command';
 import { IEventBus } from './../../commons/events/event-bus.interface';
 import { NewQuestionCreateEvent } from './../events/new-question-created.event';
-import { IQuestion } from '../repositories/question.repository';
+import { IQuestionRespository } from '../repositories/question.repository';
 
-const repository: jest.Mocked<IQuestion> = {
+const repository: jest.Mocked<IQuestionRespository> = {
   save: jest.fn(),
 };
 
